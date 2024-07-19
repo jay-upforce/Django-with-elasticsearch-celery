@@ -1,13 +1,12 @@
 # product_app/tasks.py
 from celery import shared_task
-from elasticsearch import Elasticsearch
-from .models import Product
-from .documents import ProductDocument
+from product_app.models import Product
+from product_app.documents import ProductDocument
 
 @shared_task
-def add_product_to_elasticsearch(product_id):   # add document in product index
-    product = Product.objects.get(id=product_id)    # get product id from product table
-    product_doc = ProductDocument(      # create document with passing their field
+def add_product_to_elasticsearch(product_id):   # add documents in product index using this fun 
+    product = Product.objects.get(id=product_id)    # get product id from product table where id=product_id
+    product_doc = ProductDocument(      # create document with passing document data field
         meta={'id': product.id},
         id=product.id,
         name=product.name,
@@ -16,20 +15,20 @@ def add_product_to_elasticsearch(product_id):   # add document in product index
         color=product.color,
         capacity=product.capacity
     )
-    product_doc.save()  # save document
+    product_doc.save()  # save document in ES
 
 @shared_task
-def update_product_in_elasticsearch(product_id):    # update document in product index
-    product = Product.objects.get(id=product_id)    # get product id from product table
-    product_doc = ProductDocument.get(id=product.id)    # get document id for updating their data
+def update_product_in_elasticsearch(product_id):    # update documents in product index using this fun 
+    product = Product.objects.get(id=product_id)    # get product id from product table where id=product_id
+    product_doc = ProductDocument.get(id=product.id)    # get document object where id=product.id
     product_doc.name = product.name     # update name
     product_doc.description = product.description   # update description
     product_doc.size = product.size     
     product_doc.color = product.color
     product_doc.capacity = product.capacity
-    product_doc.save()
+    product_doc.save()  # # save changes in document of ES
 
 @shared_task
-def delete_product_from_elasticsearch(product_id):      # delete document in product index
-    product_doc = ProductDocument.get(id=product_id)    # get document id
+def delete_product_from_elasticsearch(product_id):      # delete documents in product index using this fun
+    product_doc = ProductDocument.get(id=product_id)    # get product id from product table where id=product_id
     product_doc.delete()    # delete document

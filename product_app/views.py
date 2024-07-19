@@ -13,13 +13,13 @@ class ProductListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = ProductSerializer
 
     def perform_create(self, serializer):
-        instance = serializer.save()
-        add_product_to_elasticsearch.delay(instance.id)
+        instance = serializer.save()    # save & create row into DB
+        add_product_to_elasticsearch.delay(instance.id) # async fun calling of tasks.py file to save document
     
     def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            self.perform_create(serializer)
+        serializer = self.get_serializer(data=request.data) # get data from user
+        if serializer.is_valid():   # check serializer validation
+            self.perform_create(serializer) # calling above fun
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -29,21 +29,22 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
     serializer_class = ProductSerializer
 
     def perform_update(self, serializer):
-        instance = serializer.save()
-        update_product_in_elasticsearch.delay(instance.id)
+        instance = serializer.save()    # update & save record into DB
+        update_product_in_elasticsearch.delay(instance.id)  # async fun calling of tasks.py file to update document
 
     def perform_destroy(self, instance):
-        delete_product_from_elasticsearch.delay(instance.id)
-        instance.delete()
+        delete_product_from_elasticsearch.delay(instance.id)    # async fun calling of tasks.py file to delete document 
+        instance.delete()   # delete record of DB
 
 class ProductSearchView(APIView):
     def get(self, request):
-        elasticsearch_conf = settings.ELASTICSEARCH_DSL['default']  # get configration of elastic search from settings.py
-        # Connect to Elasticsearch 
+        # get configration of elastic search from settings.py
+        elasticsearch_conf = settings.ELASTICSEARCH_DSL['default']  
+        # Connect to Elasticsearch
         es = Elasticsearch(hosts=elasticsearch_conf['hosts'],   
                            basic_auth=elasticsearch_conf['basic_auth'],
                            verify_certs= elasticsearch_conf['verify_certs'])
-        search_term = request.GET.get('q', None)    # get query parameter from url 
+        search_term = request.GET.get('q', None)    # get query parameter from url/user 
         if search_term:     # check query null or not
             fields = ['size', 'name', 'description', 'color']   # search query/toekn/term in this field
             # make elastic search query

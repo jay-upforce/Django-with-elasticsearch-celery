@@ -45,7 +45,9 @@ Project Structure:
 ├── readMe.txt
 ├── requirements.txt
 ├── Dockerfile
-└── docker-compose.ymlxs
+├── docker-compose.yml
+├── .env
+└── .env.format
 
 
 Elastic Search setup:
@@ -60,11 +62,14 @@ Note: elasticsearch engine is running. (in this project i user docker image of e
 
 celery to auto insert, update, delete, search in elastic search:
 ----------------------------------------------------------------
-- create celery.py file in project_folder(like settings.py)
+- install celery package "pip install celery" and also install redis/rabbit server using "brew install redis" or "brew install rabbitmq".
+- start redis/rabbit server using "brew services start redis" or "brew services start rabbitmq".
+- create celery.py file in project_folder
 - add some configration in project_folder/__init__.py file
 - add some configration related to celery into setting.py file 
-- create tasks.py file to execute tasks related to elastic search
-- add task module/function into views.py file.
+- now check celery working or not using run celery "celery -A project_name worker -l info"
+- create tasks.py file into django_app to execute tasks related to elastic search
+- add specific created task to specific module/function into views.py file.
 - run celery "celery -A project_name worker -l info"
 
 
