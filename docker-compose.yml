@@ -1,4 +1,4 @@
-version: '3.8'
+version: '3.9'
 
 services:
   db:
@@ -15,11 +15,8 @@ services:
     
   web:
     build: .
-    command: >
-      sh -c "python manage.py migrate &&
-             python manage.py search_index --rebuild &&
-             python manage.py runserver 0.0.0.0:8000"
     container_name: django
+    entrypoint: ["/app/entrypoint.sh"]
     volumes:
       - .:/code
     ports:
@@ -48,15 +45,15 @@ services:
     volumes:
       - es_data:/usr/share/elasticsearch/data
     ports:
-      - "9200:9200"
+      - "9201:9200"
     
   kibana:
     image: docker.elastic.co/kibana/kibana:7.17.0
     container_name: kibana
     environment:
-      ELASTICSEARCH_HOSTS: https://elasticsearch:9200
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
     ports:
-      - "5601:5601"
+      - "5602:5601"
     depends_on:
       - elasticsearch
       

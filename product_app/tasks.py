@@ -1,10 +1,9 @@
-# product_app/tasks.py
 from celery import shared_task
 from product_app.models import Product
 from product_app.documents import ProductDocument
 
 @shared_task
-def add_product_to_elasticsearch(product_id):   # add documents in product index using this fun 
+def add_product_to_elasticsearch(product_id):   # add documents in product index using this fun   
     product = Product.objects.get(id=product_id)    # get product id from product table where id=product_id
     product_doc = ProductDocument(      # create document with passing document data field
         meta={'id': product.id},

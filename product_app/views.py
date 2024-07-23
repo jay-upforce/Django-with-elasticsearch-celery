@@ -1,4 +1,3 @@
-# product_app/views.py
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -15,7 +14,7 @@ class ProductListCreateAPIView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         instance = serializer.save()    # save & create row into DB
         add_product_to_elasticsearch.delay(instance.id) # async fun calling of tasks.py file to save document
-    
+
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data) # get data from user
         if serializer.is_valid():   # check serializer validation
@@ -35,6 +34,7 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
     def perform_destroy(self, instance):
         delete_product_from_elasticsearch.delay(instance.id)    # async fun calling of tasks.py file to delete document 
         instance.delete()   # delete record of DB
+
 
 class ProductSearchView(APIView):
     def get(self, request):

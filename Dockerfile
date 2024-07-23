@@ -19,4 +19,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy project
 COPY . .
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "project_name.wsgi:application"]
+# Add this to your Dockerfile
+COPY entrypoint.sh .
+RUN chmod +x /app/entrypoint.sh
+
+# Update the CMD to use the entrypoint script
+CMD ["/app/entrypoint.sh"]

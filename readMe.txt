@@ -46,6 +46,7 @@ Project Structure:
 ├── requirements.txt
 ├── Dockerfile
 ├── docker-compose.yml
+├── entrypoint.sh
 ├── .env
 └── .env.format
 
@@ -73,14 +74,39 @@ celery to auto insert, update, delete, search in elastic search:
 - run celery "celery -A project_name worker -l info"
 
 
-Run process:
-------------
-- start docker desktop app
-- start elastic search from docker-compose file using "docker compose up" to run the docker image.
-- now you can access elastic search and kibana at "http://localhost:9200" & "http://localhost:5601"
-- now run makemigrations and migrate command in django terminal
-- now run "python manage.py search_index --rebuild" command in django terminal to the initial index build we need to run:.
-- start redis-server for executing celery task (after installtion use command in mac: brew services start redis)
-- run "redis-cli ping" to check redis server running or not?
-- run "celery -A DRF_elastic_celery_pro worker -l info" command into calery terminal to Start Celery worker
-- run "python manage.py runserver" command in django terminal to run project.
+Dockerfile:
+-----------
+- using dockerfile create docker image
+- copy all files and folders into docker image.
+- create entrypoint.sh file to run command and migrate models & generate index file into elastic search.
+
+Docker-compose.yml file:
+------------------------
+- add all images which use in django such as postgresql, celery, redis, elastic search, kibana.
+- use postgresql image with giving authentication & database in environment variable.
+- use elastic search same like postgresql
+- use kibana to see elastic search index & monitor ES.
+- add redis server to use celery to execute anonymous task like add document into elastic search.
+
+
+Run Project using local sysytem:
+--------------------------------
+- install redis/rabbit server and start server using "brew services start redis"
+- install elastic search engine and kibana dashboard.
+- first start elastic search engine then start kibana using goto elasticsearch folder & kibana folder.
+        ES: cd elasticsearch-8.14.2/  and run -> ./bin/elasticsearch
+        kibana: cd kibana-8.14.2/   and run -> ./bin/kibana
+- run celery worker using "celery -A DRF_elastic_celery_pro worker -l info"
+- now you can access elastic search and kibana at "http://localhost:9200" & "http://localhost:5601" to monitor ES.
+- run "python manage.py makemigrations" to create migrations files.
+- run "python manage.py migrate" to execute migrations file to make tables into DB.
+- run "python manage.py search_index --rebuild" to create indexes into elastic search.
+- now start django server using "python manage.py runserver" 
+- now perform operatios.
+
+
+Run Project using Docker:
+--------------------------
+- install docker desktop and start docker application.
+- build your docker compose file using "docker compose build".
+- run your project using "docker compose up".
