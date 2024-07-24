@@ -1,10 +1,10 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.conf import settings
 from product_app.models import Product
 from product_app.serializers import ProductSerializer
-from elasticsearch import Elasticsearch
+from product_app.documents import ProductDocument
+from elasticsearch_dsl import Q
 from product_app.tasks import add_product_to_elasticsearch, update_product_in_elasticsearch, delete_product_from_elasticsearch
 
 class ProductListCreateAPIView(generics.ListCreateAPIView):
@@ -38,30 +38,25 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
 
 class ProductSearchView(APIView):
     def get(self, request):
-        # get configration of elastic search from settings.py
-        elasticsearch_conf = settings.ELASTICSEARCH_DSL['default']  
-        # Connect to Elasticsearch
-        es = Elasticsearch(hosts=elasticsearch_conf['hosts'],   
-                           basic_auth=elasticsearch_conf['basic_auth'],
-                           verify_certs= elasticsearch_conf['verify_certs'])
-        search_term = request.GET.get('q', None)    # get query parameter from url/user 
-        if search_term:     # check query null or not
-            fields = ['size', 'name', 'description', 'color']   # search query/toekn/term in this field
-            # make elastic search query
-            body = {
-                'query': {
-                    'multi_match': {
-                        'query': search_term,
-                        'fields': fields
+        query = request.GET.get('q', None)    # get query parameter from url/user 
+        # check if user not provide query/word then give message as response
+        if not query:
+            return Response({"message": "No query provided"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        fields = ['size', 'name', 'description', 'color']   # search query/token/term in this field
+        q = Q("multi_match", query=query, fields=fields)    # create Q query to find multiple token in given field   
+        search = ProductDocument.search().query(q)  # search in given document
+        response = search.execute()     # execute query & get response and store into response variable
+        # create list dict comprehension
+        results = [{    
+                        'name': hit.name,
+                        'description': hit.description,
+                        'size': hit.size,
+                        'color': hit.color,
+                        'capacity': hit.capacity
                     }
-                }
-            }
-            response = es.search(index='products', body=body)  # give index name when you give at index creation time
-            total_record = response['hits']['total']['value']
-            # if total record is 0 then give message.
-            if total_record == 0:   
-                return Response({"message": "No products found!"})
-            product_data = response['hits']['hits'][0]['_source']  # get all products data
-            return Response(product_data)
-        else:
-            return Response({"message":"Query not found!"})
+                    for hit in response # get all hits then get all data values from hits & convert into dict list
+                ]
+        if not results: # if result is null/empty list then give message
+            return Response({'message': 'No results found'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"result":results}) 
